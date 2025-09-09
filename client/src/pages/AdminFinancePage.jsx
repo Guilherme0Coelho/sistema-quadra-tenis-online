@@ -15,7 +15,7 @@ const AdminFinancePage = () => {
   const fetchFinanceData = async (year, month) => {
     setIsLoading(true); setError(null);
     try {
-      const url = `http://localhost:3001/api/bookings/finance?year=${year}&month=${month}`;
+      const url = `https://arena-floriano.onrender.com/api/bookings/finance?year=${year}&month=${month}`;
       const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
       setPayments(response.data);
     } catch (error) { setError("Não foi possível carregar os dados financeiros."); }
@@ -38,7 +38,7 @@ const AdminFinancePage = () => {
     if (priceString === null) return;
     if (isNaN(price) || price < 0) { alert("Valor inválido."); return; }
     try {
-      await axios.put(`http://localhost:3001/api/bookings/admin/${booking.id}`, { paymentStatus: 'paid', price: price }, { headers: { 'Authorization': `Bearer ${token}` } });
+      await axios.put(`https://arena-floriano.onrender.com/api/bookings/admin/${booking.id}`, { paymentStatus: 'paid', price: price }, { headers: { 'Authorization': `Bearer ${token}` } });
       fetchFinanceData(currentDate.getFullYear(), currentDate.getMonth());
     } catch (error) { alert("Erro ao atualizar pagamento."); }
   };

@@ -30,7 +30,7 @@ function CalendarPage() {
     setError(null);
     try {
       const dateString = formatDateForInput(date);
-      const url = `http://localhost:3001/api/bookings/public?date=${dateString}`;
+      const url = `const url = https://arena-floriano.onrender.com/api/bookings/admin?startDate=${dateString}`;
       const response = await axios.get(url);
       setBookings(response.data);
     } catch (err) {
@@ -99,7 +99,7 @@ function CalendarPage() {
     const details = { slot: { date: selectedDate, time: cart.sort()[0] }, duration };
     sessionStorage.setItem('pendingBookingDetails', JSON.stringify(details));
     try {
-      const response = await axios.post('http://localhost:3001/api/bookings/create-checkout-session', { duration, bookingDetails: details });
+      const response = await axios.post('https://arena-floriano.onrender.com/api/bookings/create-checkout-session', { duration, bookingDetails: details });
       window.location.href = response.data.url;
     } catch (err) { alert('Erro ao iniciar pagamento. Tente novamente.'); }
   };

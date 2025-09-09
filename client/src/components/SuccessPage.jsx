@@ -29,7 +29,7 @@ const SuccessPage = () => {
             const bookingDetails = JSON.parse(pendingBooking);
             setBookedDate(new Date(bookingDetails.slot.date)); 
             
-            await axios.post('http://localhost:3001/api/bookings/verify-session-and-save', {
+            await axios.post('https://arena-floriano.onrender.com/api/bookings/verify-session-and-save', {
               session_id: sessionId,
               bookingDetails: bookingDetails,
             });
