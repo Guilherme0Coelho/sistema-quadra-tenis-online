@@ -71,10 +71,10 @@ const AdminBookingModal = ({ modalInfo, onClose, onSave, onDelete, onDeleteRule 
           <div className="form-group">
             <label>Duração</label>
             <select name="duration" value={bookingData.duration || 60} onChange={handleChange} disabled={isEditing}>
-              <option value={30}>30 Min</option>
-              <option value={60}>1 Hora</option>
-              <option value={90}>1h 30</option>
-              <option value={120}>2 Horas</option>
+              <option value={50}>30 Min</option>
+              <option value={100}>1 Hora</option>
+              <option value={150}>1h 30</option>
+              <option value={200}>2 Horas</option>
             </select>
           </div>
           <div className="form-group">

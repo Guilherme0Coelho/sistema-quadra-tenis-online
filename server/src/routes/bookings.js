@@ -18,16 +18,25 @@ const generateRecurringBookings = async (rule, weeksToGenerate = 12) => {
         if (targetDate.getUTCDay() === originalStartTime.getUTCDay()) {
             const newStartTime = new Date(targetDate);
             newStartTime.setUTCHours(originalStartTime.getUTCHours(), originalStartTime.getUTCMinutes(), 0, 0);
+
             if (newStartTime < new Date()) continue;
+
             const duration = new Date(rule.end_time) - originalStartTime;
             const newEndTime = new Date(newStartTime.getTime() + duration);
+
             const existingQuery = await pool.query(`SELECT id FROM bookings WHERE start_time = $1 AND is_recurring = false`, [newStartTime]);
             if (existingQuery.rows.length === 0) {
                 await createBooking({
-                    userId: rule.user_id, courtId: rule.court_id, startTime: newStartTime.toISOString(),
-                    endTime: newEndTime.toISOString(), bookingType: 'mensalista',
-                    paymentStatus: 'pending', isRecurring: false,
-                    guestName: rule.guest_name, price: rule.price, note: 'Gerado automaticamente',
+                    userId: rule.user_id,
+                    courtId: rule.court_id,
+                    startTime: newStartTime.toISOString(),
+                    endTime: newEndTime.toISOString(),
+                    bookingType: 'mensalista',
+                    paymentStatus: 'pending',
+                    isRecurring: false,
+                    guestName: rule.guest_name,
+                    price: rule.price,
+                    note: 'Gerado automaticamente',
                     parentBookingId: rule.id
                 });
                 newBookingsCount++;
@@ -37,7 +46,7 @@ const generateRecurringBookings = async (rule, weeksToGenerate = 12) => {
     return newBookingsCount;
 };
 
-// Rota pública do cliente
+// Rota pública do cliente - SIMPLIFICADA
 router.get('/public', async (req, res) => {
     try {
         const { date } = req.query;
@@ -50,7 +59,7 @@ router.get('/public', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota da agenda do admin
+// Rota do admin - SIMPLIFICADA
 router.get('/admin', authMiddleware, async (req, res) => {
     const { startDate: startDateString } = req.query;
     if (!startDateString) return res.status(400).json({ error: 'A data de início da semana é obrigatória.' });
@@ -64,7 +73,7 @@ router.get('/admin', authMiddleware, async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota para gerar agendamentos recorrentes
+// ROTA PARA GERAR OS AGENDAMENTOS DOS MENSALISTAS
 router.post('/admin/generate-recurring', authMiddleware, async (req, res) => {
     try {
         const { weeksToGenerate } = req.body;
@@ -75,19 +84,24 @@ router.post('/admin/generate-recurring', authMiddleware, async (req, res) => {
             totalNewBookings += await generateRecurringBookings(rule, weeksToGenerate);
         }
         res.status(200).json({ message: `${totalNewBookings} novos agendamentos de mensalistas foram gerados.` });
-    } catch (error) { res.status(500).json({ error: 'Erro ao gerar agendamentos.' }); }
+    } catch (error) {
+        console.error("Erro ao gerar agendamentos recorrentes:", error);
+        res.status(500).json({ error: 'Erro ao gerar agendamentos.' });
+    }
 });
 
-// Rota para listar as REGRAS de mensalistas
+// Rota para listar apenas as REGRAS de mensalistas
 router.get('/admin/recurring-rules', authMiddleware, async (req, res) => {
     try {
         const query = `SELECT b.*, u.name as user_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.is_recurring = true AND b.booking_type = 'mensalista' ORDER BY b.start_time`;
         const { rows } = await pool.query(query);
         res.json(rows);
-    } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
+    } catch (error) {
+        res.status(500).json({ error: 'Erro interno do servidor.' });
+    }
 });
 
-// Rota para criar agendamentos (incluindo regras de mensalista)
+// Rota POST para o admin (cria avulso, reposição ou a REGRA mensalista)
 router.post('/admin', authMiddleware, async (req, res) => {
   try {
     const newBooking = await createBooking(req.body);
@@ -95,10 +109,13 @@ router.post('/admin', authMiddleware, async (req, res) => {
         await generateRecurringBookings(newBooking);
     }
     res.status(201).json(newBooking);
-  } catch (error) { res.status(500).json({ error: 'Erro ao criar agendamento.' }); }
+  } catch (error) {
+    console.error("ERRO DETALHADO AO CRIAR AGENDAMENTO:", error);
+    res.status(500).json({ error: 'Erro ao criar agendamento.' });
+  }
 });
 
-// Rota para ATUALIZAR um agendamento
+// Rota PUT para o admin (edita um agendamento REAL)
 router.put('/admin/:id', authMiddleware, async (req, res) => {
   try {
     const updatedBooking = await updateBooking(req.params.id, req.body);
@@ -107,22 +124,20 @@ router.put('/admin/:id', authMiddleware, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota para EXCLUIR um agendamento (real ou regra)
+// Rota DELETE para o admin (deleta um agendamento REAL ou uma REGRA)
 router.delete('/admin/:id', authMiddleware, async (req, res) => {
   try {
     const deletedBooking = await deleteBooking(req.params.id);
     if (!deletedBooking) return res.status(404).json({ error: 'Agendamento não encontrado.' });
     res.status(200).json({ message: 'Agendamento excluído com sucesso.' });
-  } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
+  } catch (error) {
+    console.error("ERRO DETALHADO AO EXCLUIR AGENDAMENTO:", error);
+    res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
 });
 
-// Rota Financeira (COM PROTEÇÃO EXTRA)
+// Rota Financeira (lê apenas agendamentos reais)
 router.get('/finance', authMiddleware, async (req, res) => {
-  // Verificação de nível de admin adicionada aqui
-  if (req.user.admin_level !== 'super') {
-    return res.status(403).json({ error: 'Acesso proibido. Apenas para Super Admins.' });
-  }
-
   const { year, month } = req.query;
   if (!year || !month) return res.status(400).json({ error: 'Ano e mês são obrigatórios.' });
   try {
@@ -141,7 +156,6 @@ router.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
-      customer_email_collection: 'required',
       line_items: [{ price_data: { currency: 'brl', product_data: { name: `Reserva de Quadra - ${duration} min`, description: `Agendamento para ${new Date(bookingDetails.slot.date).toLocaleDateString('pt-BR')} às ${bookingDetails.slot.time}` }, unit_amount: amountInCents }, quantity: 1 }],
       mode: 'payment',
       success_url: `http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -150,6 +164,7 @@ router.post('/create-checkout-session', async (req, res) => {
     res.json({ url: session.url });
   } catch (error) { res.status(500).json({ error: 'Falha ao criar sessão de pagamento.' }); }
 });
+
 router.post('/verify-session-and-save', async (req, res) => {
   try {
     const { session_id, bookingDetails } = req.body;

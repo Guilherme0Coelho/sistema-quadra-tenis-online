@@ -70,9 +70,10 @@ const Calendar = ({ bookings, isAdmin = false, weekStartDate, selectedDate, onSl
           {timeSlots.map(time => (
             <tr key={time}>
               <td className="time-cell">{time}</td>
-              {weekDays.map((dayDate) => {
-                const dayIndex = dayDate.getDay();
+              {weekDays.map((dayDate, dayIndex) => {
                 const booking = getBookingForSlot(dayDate, time);
+                const isSelectedDay = isAdmin || (selectedDate && dayDate.toDateString() === selectedDate.toDateString());
+                const isInCart = isSlotInCart(time);
                 const isBooked = booking && booking.booking_type !== 'ausencia';
                 
                 let slotClass = 'slot';
@@ -80,28 +81,39 @@ const Calendar = ({ bookings, isAdmin = false, weekStartDate, selectedDate, onSl
                   slotClass += ` ${booking.booking_type}`;
                 } else if (booking && booking.booking_type === 'ausencia') {
                   slotClass += ' ausencia';
+                } else if (isInCart && isSelectedDay) {
+                  slotClass += ' selected';
+                } else if (isSelectedDay) {
+                  slotClass += ' available';
                 } else {
-                  slotClass += ' available-admin';
+                  slotClass += ' disabled';
                 }
                 
+                const isClickable = isAdmin ? isSelectedDay : !isBooked && isSelectedDay;
+
                 return (
                   <td 
                     key={`${dayIndex}-${time}`} 
                     className={slotClass}
-                    onClick={() => onSlotClick(dayDate, time, booking)}
+                    onClick={() => isClickable && onSlotClick(dayDate, time, booking)}
                   >
-                    {isBooked ? (
+                    {isBooked && isAdmin ? (
                       <div className="admin-slot-details">
                         <span className="user-name">{booking.guest_name || booking.user_name || 'Avulso'}</span>
                         <span className="payment-status">{statusTranslations[booking.payment_status]}</span>
                         {booking.note && <span className="booking-note">{booking.note}</span>}
                       </div>
-                    ) : booking && booking.booking_type === 'ausencia' ? (
+                    ) : (
+                      booking && booking.booking_type === 'ausencia' && isAdmin ? (
                       <div className="admin-slot-details">
                           <span className="user-name">{booking.guest_name || booking.user_name}</span>
                           <span className="booking-note">(Ausente)</span>
                       </div>
-                    ) : ''}
+                    ) : (
+                      isBooked && !isAdmin && new Date(booking.start_time).getHours() === parseInt(time.split(':')[0]) && new Date(booking.start_time).getMinutes() === parseInt(time.split(':')[1])
+                        ? statusTranslations[booking.booking_type]
+                        : ''
+                    ))}
                   </td>
                 );
               })}

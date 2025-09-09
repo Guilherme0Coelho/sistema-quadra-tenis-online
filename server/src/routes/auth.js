@@ -17,10 +17,17 @@ router.post('/login', async (req, res) => {
     const user = userQuery.rows[0];
 
     if (!user) {
+      console.log(`\n--- DIAGNÓSTICO: Tentativa de login com email não encontrado: ${email} ---\n`);
       return res.status(401).json({ message: 'Credenciais inválidas.' });
     }
-
+    
+    // --- DIAGNÓSTICO FINAL ---
+    console.log("\n--- DADOS RECEBIDOS NA ROTA DE LOGIN ---");
+    console.log("Senha digitada no formulário:", `"${password}"`);
+    console.log("Hash salvo no banco de dados:", `"${user.password}"`);
     const isPasswordValid = bcrypt.compareSync(password, user.password);
+    console.log("As senhas batem? (bcrypt.compareSync):", isPasswordValid);
+    console.log("-----------------------------------------");
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Credenciais inválidas.' });
@@ -30,22 +37,12 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ message: 'Acesso negado. Apenas para administradores.' });
     }
 
-    // ATUALIZAÇÃO AQUI: Adicionamos 'admin_level' ao conteúdo do token
-    const tokenPayload = {
-      userId: user.id,
-      role: user.role,
-      admin_level: user.admin_level, // Inclui o nível de permissão
-    };
-
-    const token = jwt.sign(
-      tokenPayload,
-      process.env.JWT_SECRET,
-      { expiresIn: '8h' }
-    );
-
+    const tokenPayload = { userId: user.id, role: user.role, admin_level: user.admin_level };
+    const token = jwt.sign( tokenPayload, process.env.JWT_SECRET, { expiresIn: '8h' });
     res.json({ token });
 
   } catch (error) {
+    console.error('Erro no login:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 });
