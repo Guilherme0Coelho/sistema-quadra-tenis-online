@@ -1,0 +1,68 @@
+/* src/components/DaySchedule.css */
+.schedule-container {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.slot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.slot-row:last-child {
+  border-bottom: none;
+}
+
+.slot-row.available {
+  cursor: pointer;
+}
+
+.slot-row.available:hover {
+  background-color: #f7fafc;
+}
+
+.slot-row.booked {
+  opacity: 0.6;
+}
+
+.slot-time {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.slot-status {
+  font-weight: bold;
+  padding: 4px 12px;
+  border-radius: 9999px; /* Formato de pílula */
+  font-size: 0.8rem;
+  text-transform: capitalize;
+}
+
+.slot-status.avulso,
+.slot-status.reposicao {
+  background-color: #fed7d7; /* Vermelho claro */
+  color: #822727;
+}
+
+.slot-status.mensalista {
+  background-color: #e2e8f0; /* Cinza claro */
+  color: #4a5568;
+}
+
+.slot-status.selected {
+  background-color: #fefcbf; /* Amarelo claro */
+  color: #975a16;
+}
+
+.slot-row.available .slot-status {
+  background-color: #c6f6d5; /* Verde claro */
+  color: #22543d;
+}

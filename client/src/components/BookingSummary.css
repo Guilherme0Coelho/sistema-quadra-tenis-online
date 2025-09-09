@@ -1,0 +1,71 @@
+/* src/components/BookingSummary.css */
+.summary-container {
+  border: 1px solid #e2e8f0;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+  transition: all 0.3s ease-in-out;
+}
+.summary-container h3 {
+  text-align: center;
+  margin-top: 0;
+  color: #2d3748;
+}
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+.summary-details p {
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+}
+.summary-price {
+  font-size: 1.2rem;
+  color: #2f855a;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.75rem;
+  margin-top: 0.5rem !important;
+}
+.placeholder-text {
+  text-align: center;
+  color: #a0aec0;
+  padding: 1rem 0;
+}
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.btn-confirm {
+  background-color: #38a169;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+.btn-confirm:hover {
+  background-color: #2f855a;
+}
+.btn-clear {
+  background-color: #a0aec0;
+  color: white;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+.btn-clear:hover {
+  background-color: #718096;
+}

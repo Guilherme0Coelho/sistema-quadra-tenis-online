@@ -1,0 +1,74 @@
+/* src/components/AdminLayout.css */
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.admin-header {
+  background-color: #2d3748; /* Cinza escuro */
+  color: white;
+  padding: 0 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.admin-header-content > span {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.admin-nav {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.admin-nav a {
+  color: #a0aec0; /* Cinza claro para links inativos */
+  text-decoration: none;
+  font-weight: bold;
+  padding: 20px 0; /* Aumenta a área de clique */
+  border-bottom: 3px solid transparent;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.admin-nav a:hover {
+  color: white;
+}
+
+/* Estilo para o link da página ativa (graças ao NavLink) */
+.admin-nav a.active {
+  color: white;
+  border-bottom-color: #4299e1; /* Azul */
+}
+
+.logout-button {
+  background-color: #e53e3e; /* Vermelho */
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background-color: #c53030;
+}
+
+.admin-main-content {
+  flex-grow: 1;
+  background-color: #f7fafc;
+}

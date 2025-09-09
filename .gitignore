@@ -1,0 +1,16 @@
+# Pastas de dependências
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Arquivos de ambiente com senhas
+.env
+client/.env*
+server/.env*
+
+# Pasta de build do frontend
+client/dist/
+
+# Logs e arquivos do sistema
+npm-debug.log*
+.DS_Store

@@ -1,0 +1,155 @@
+/* src/App.css */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  background-color: #f9fafb;
+  color: #1a202c;
+}
+
+.app-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* --- NOVO ESTILO PARA HEADER COM LOGO --- */
+.app-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.logo {
+  height: 80px; /* Ajuste a altura do seu logo aqui */
+  margin-bottom: 1rem;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0; /* Remove a margem para ficar alinhado com o logo */
+}
+/* --- FIM DO NOVO ESTILO --- */
+
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .main-layout {
+    grid-template-columns: 3fr 1.5fr;
+  }
+  .summary-section {
+    position: sticky;
+    top: 2rem;
+    align-self: flex-start;
+  }
+}
+
+.date-picker-container {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+}
+
+.date-picker-container input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e0;
+}
+
+.error-message {
+  color: #c53030;
+  background-color: #fed7d7;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.week-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.week-navigation h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #2d3748;
+}
+
+.week-navigation button {
+  background-color: #3182ce;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* --- SEU CÓDIGO DO MODAL (MANTIDO 100%) --- */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex; justify-content: center; align-items: center; z-index: 1000;
+}
+.modal-content {
+  background-color: #fff; padding: 25px; border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  width: 90%; max-width: 550px; max-height: 90vh;
+  overflow-y: auto; position: relative; display: flex;
+  flex-direction: column; gap: 15px;
+}
+.modal-content h2 { font-size: 1.6rem; color: #333; margin-bottom: 15px; text-align: center; }
+.modal-form label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 0.95rem; }
+.modal-form input[type="text"],
+.modal-form input[type="number"],
+.modal-form select,
+.modal-form textarea {
+  width: 100%; padding: 10px; margin-bottom: 15px;
+  border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;
+  box-sizing: border-box;
+}
+.modal-form textarea { min-height: 80px; resize: vertical; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.modal-actions button {
+  padding: 10px 20px; border: none; border-radius: 5px;
+  cursor: pointer; font-size: 1rem; font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+.modal-actions .save-button { background-color: #4CAF50; color: white; }
+.modal-actions .save-button:hover { background-color: #45a049; }
+.modal-actions .delete-button { background-color: #f44336; color: white; }
+.modal-actions .delete-button:hover { background-color: #da190b; }
+.modal-actions .cancel-button { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
+.modal-actions .cancel-button:hover { background-color: #e0e0e0; }
+@media (max-width: 600px) {
+  .modal-content { width: 95%; padding: 20px; }
+  .modal-content h2 { font-size: 1.4rem; }
+  .modal-form label, .modal-form input, .modal-form select, .modal-form textarea { font-size: 0.9rem; }
+  .modal-actions { flex-direction: column; gap: 8px; }
+  .modal-actions button { width: 100%; padding: 12px; }
+}
+
+/* --- NOVO ESTILO PARA O RODAPÉ DE CONTATO --- */
+.contact-footer {
+  text-align: center;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+  color: #718096;
+}
+.contact-footer p {
+  margin: 0.5rem 0;
+}
+.contact-footer strong {
+  color: #4a5568;
+}
