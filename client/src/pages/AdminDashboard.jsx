@@ -15,6 +15,9 @@ const getStartOfWeek = (date) => {
   return new Date(newDate.setDate(diff));
 };
 
+// CORREÇÃO: Definimos a URL da API como uma constante no topo
+const API_BASE_URL = 'https://arena-floriano.onrender.com';
+
 const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
@@ -28,14 +31,13 @@ const AdminDashboard = () => {
     setError('');
     try {
       const dateString = formatDateForAPI(weekStartDate);
-      // CORREÇÃO CRÍTICA AQUI: A URL da API está definida corretamente
-      const url = `https://arena-floriano.onrender.com/api/bookings/admin?startDate=${dateString}`;
+      // CORREÇÃO: Usamos a constante para construir a URL
+      const url = `${API_BASE_URL}/api/bookings/admin?startDate=${dateString}`;
       
       const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
       setBookings(response.data);
     } catch (err) {
       setError('Falha ao carregar agendamentos.');
-      console.error("Erro ao buscar dados de admin:", err);
     } finally {
       setIsLoading(false);
     }
@@ -43,7 +45,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchAdminBookingsForWeek();
-  }, [weekStartDate, token]);
+  }, [weekStartDate]);
 
   const goToPreviousWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() - 7); return d; });
   const goToNextWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() + 7); return d; });
@@ -61,7 +63,7 @@ const AdminDashboard = () => {
   const handleSaveBooking = async (formData) => {
     try {
       const isEditing = !!formData.id;
-      const apiUrl = 'https://arena-floriano.onrender.com/api/bookings/admin';
+      const apiUrl = `${API_BASE_URL}/api/bookings/admin`;
       
       if (isEditing) {
         const updateData = { bookingType: formData.bookingType, paymentStatus: formData.paymentStatus, price: formData.price, note: formData.note, guestName: formData.userName };
@@ -88,7 +90,7 @@ const AdminDashboard = () => {
   const handleDeleteBooking = async (bookingId) => {
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
-        await axios.delete(`https://arena-floriano.onrender.com/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        await axios.delete(`${API_BASE_URL}/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         handleCloseModal();
         fetchAdminBookingsForWeek();
       } catch (err) { alert("Erro ao excluir o agendamento."); }

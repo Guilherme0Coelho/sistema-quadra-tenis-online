@@ -1,5 +1,5 @@
 // src/CalendarPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DaySchedule from './components/DaySchedule';
@@ -7,77 +7,55 @@ import BookingSummary from './components/BookingSummary';
 import './App.css';
 import logo from './assets/arenalogo.png';
 
-// Função auxiliar para formatar a data para o input (YYYY-MM-DD)
-const formatDateForInput = (date) => {
-    if (!date) return '';
-    // Usa o fuso horário local para garantir que a data exibida seja a correta
-    const adjustedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return adjustedDate.toISOString().split('T')[0];
-};
+const formatDateForAPI = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+const API_BASE_URL = 'https://arena-floriano.onrender.com';
 
 function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [bookings, setBookings] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Função de busca de dados, otimizada com useCallback
-  const fetchBookings = useCallback(async (date) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const dateString = formatDateForInput(date);
-      const url = `const url = https://arena-floriano.onrender.com/api/bookings/admin?startDate=${dateString}`;
-      const response = await axios.get(url);
-      setBookings(response.data);
-    } catch (err) {
-      setError('Falha ao carregar os agendamentos.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Efeito para definir a data COM BASE NA URL. Roda sempre que a URL muda.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const dateFromUrl = params.get('date');
-    let newDate;
     if (dateFromUrl) {
-      // Interpreta a data da URL como se fosse local
       const [year, month, day] = dateFromUrl.split('-').map(Number);
-      newDate = new Date(year, month - 1, day);
+      setSelectedDate(new Date(year, month - 1, day));
     } else {
-      // Se não houver data na URL, usa a data de hoje
-      newDate = new Date();
-    }
-    // Evita re-renderizações desnecessárias se a data já for a mesma
-    if (!selectedDate || newDate.toDateString() !== selectedDate.toDateString()) {
-      setSelectedDate(newDate);
+      setSelectedDate(new Date());
     }
   }, [location.search]);
 
-  // Efeito para buscar dados QUANDO 'selectedDate' muda.
   useEffect(() => {
-    if (selectedDate) {
-      setCart([]); // Limpa o carrinho ao buscar nova data
-      fetchBookings(selectedDate);
-    }
-  }, [selectedDate, fetchBookings]);
+    if (!selectedDate) return;
+    setCart([]); 
+    const fetchBookings = async () => {
+      setIsLoading(true); setError(null);
+      try {
+        const dateString = formatDateForAPI(selectedDate);
+        // CORREÇÃO: URL correta para a API pública do cliente
+        const url = `${API_BASE_URL}/api/bookings/public?date=${dateString}`;
+        const response = await axios.get(url);
+        setBookings(response.data);
+      } catch (err) { setError('Falha ao carregar os agendamentos.'); }
+      finally { setIsLoading(false); }
+    };
+    fetchBookings();
+  }, [selectedDate]);
 
-  // Função para lidar com a mudança no seletor de data
   const handleDateChange = (event) => {
     const dateString = event.target.value;
-    // Atualiza a URL, o que por sua vez vai disparar o useEffect para buscar os dados
     navigate(`/?date=${dateString}`);
   };
-  
+
   const handleSlotClick = (time) => {
     setCart(prevCart => {
-      if (prevCart.includes(time)) return prevCart.filter(t => t !== time).sort((a, b) => a.localeCompare(b));
-      const newCart = [...prevCart, time].sort((a, b) => a.localeCompare(b));
+      if (prevCart.includes(time)) return prevCart.filter(t => t !== time).sort((a,b) => a.localeCompare(b));
+      const newCart = [...prevCart, time].sort((a,b) => a.localeCompare(b));
       if (newCart.length > 1) {
         const [startHour, startMinute] = newCart[0].split(':').map(Number);
         let currentHour = startHour, currentMinute = startMinute;
@@ -99,13 +77,13 @@ function CalendarPage() {
     const details = { slot: { date: selectedDate, time: cart.sort()[0] }, duration };
     sessionStorage.setItem('pendingBookingDetails', JSON.stringify(details));
     try {
-      const response = await axios.post('https://arena-floriano.onrender.com/api/bookings/create-checkout-session', { duration, bookingDetails: details });
+      const response = await axios.post(`${API_BASE_URL}/api/bookings/create-checkout-session`, { duration, bookingDetails: details });
       window.location.href = response.data.url;
     } catch (err) { alert('Erro ao iniciar pagamento. Tente novamente.'); }
   };
 
   if (!selectedDate) {
-    return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Carregando...</p>;
+    return <p style={{textAlign: 'center', marginTop: '2rem'}}>Carregando...</p>;
   }
 
   return (
@@ -118,7 +96,7 @@ function CalendarPage() {
         <section className="calendar-section">
           <div className="date-picker-container">
             <label htmlFor="date-picker">Selecione a Data:</label>
-            <input type="date" id="date-picker" value={formatDateForInput(selectedDate)} onChange={handleDateChange} />
+            <input type="date" id="date-picker" value={formatDateForAPI(selectedDate)} onChange={handleDateChange} />
           </div>
           {isLoading ? <p>Carregando agendamentos...</p> : error ? <p className="error-message">{error}</p> : (
             <DaySchedule bookings={bookings} onSlotClick={handleSlotClick} cart={cart} />
@@ -130,7 +108,7 @@ function CalendarPage() {
       </main>
       <footer className="contact-footer">
         <p>Em caso de chuva ou necessidade de remarcação, entre em contato:</p>
-        <p><strong>Telefone:</strong> (XX) 9XXXX-XXXX | <strong>Email:</strong> seuemail@exemplo.com</p>
+        <p><strong>Telefone:</strong> (11) 99504-5594 | <strong>Email:</strong> sergiofloriano.arena390@gmail.com </p>
       </footer>
     </div>
   );
