@@ -6,6 +6,7 @@ import AdminBookingModal from '../components/AdminBookingModal';
 import '../App.css';
 
 const formatDateForAPI = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
 const getStartOfWeek = (date) => {
   const newDate = new Date(date);
   newDate.setHours(0, 0, 0, 0);
@@ -23,17 +24,26 @@ const AdminDashboard = () => {
   const token = localStorage.getItem('token');
 
   const fetchAdminBookingsForWeek = async () => {
-    setIsLoading(true); setError('');
+    setIsLoading(true);
+    setError('');
     try {
       const dateString = formatDateForAPI(weekStartDate);
+      // CORREÇÃO CRÍTICA AQUI: A URL da API está definida corretamente
       const url = `https://arena-floriano.onrender.com/api/bookings/admin?startDate=${dateString}`;
+      
       const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
       setBookings(response.data);
-    } catch (err) { setError('Falha ao carregar agendamentos.'); }
-    finally { setIsLoading(false); }
+    } catch (err) {
+      setError('Falha ao carregar agendamentos.');
+      console.error("Erro ao buscar dados de admin:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  useEffect(() => { fetchAdminBookingsForWeek(); }, [weekStartDate]);
+  useEffect(() => {
+    fetchAdminBookingsForWeek();
+  }, [weekStartDate, token]);
 
   const goToPreviousWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() - 7); return d; });
   const goToNextWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() + 7); return d; });
@@ -51,9 +61,11 @@ const AdminDashboard = () => {
   const handleSaveBooking = async (formData) => {
     try {
       const isEditing = !!formData.id;
+      const apiUrl = 'https://arena-floriano.onrender.com/api/bookings/admin';
+      
       if (isEditing) {
         const updateData = { bookingType: formData.bookingType, paymentStatus: formData.paymentStatus, price: formData.price, note: formData.note, guestName: formData.userName };
-        await axios.put(`https://arena-floriano.onrender.com/api/bookings/admin/${formData.id}`, updateData, { headers: { 'Authorization': `Bearer ${token}` } });
+        await axios.put(`${apiUrl}/${formData.id}`, updateData, { headers: { 'Authorization': `Bearer ${token}` } });
       } else {
         const [hour, minute] = formData.time.split(':');
         const startTime = new Date(formData.date);
@@ -66,34 +78,20 @@ const AdminDashboard = () => {
           isRecurring: formData.bookingType === 'mensalista',
           guestName: formData.userName, price: formData.price || 0, note: formData.note
         };
-        await axios.post('https://arena-floriano.onrender.com/api/bookings/admin', newBookingData, { headers: { 'Authorization': `Bearer ${token}` } });
+        await axios.post(apiUrl, newBookingData, { headers: { 'Authorization': `Bearer ${token}` } });
       }
       handleCloseModal();
       fetchAdminBookingsForWeek();
     } catch (err) { alert("Erro ao salvar o agendamento."); }
   };
   
-  // CORREÇÃO: A função agora recebe o ID diretamente
   const handleDeleteBooking = async (bookingId) => {
-    if (window.confirm('Isso excluirá o agendamento deste dia. Deseja continuar?')) {
+    if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
       try {
         await axios.delete(`https://arena-floriano.onrender.com/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         handleCloseModal();
         fetchAdminBookingsForWeek();
       } catch (err) { alert("Erro ao excluir o agendamento."); }
-    }
-  };
-
-  // CORREÇÃO: A função agora recebe o ID da regra diretamente
-  const handleDeleteRule = async (ruleId) => {
-    if (window.confirm('Atenção! Isso excluirá a REGRA do mensalista e todos os seus futuros agendamentos gerados por ela. Esta ação não pode ser desfeita. Deseja continuar?')) {
-        try {
-            await axios.delete(`https://arena-floriano.onrender.com/api/bookings/admin/${ruleId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-            handleCloseModal();
-            fetchAdminBookingsForWeek();
-        } catch(err) {
-            alert("Erro ao excluir a regra do mensalista.");
-        }
     }
   };
   
@@ -122,7 +120,6 @@ const AdminDashboard = () => {
         onClose={handleCloseModal}
         onSave={handleSaveBooking}
         onDelete={handleDeleteBooking}
-        onDeleteRule={handleDeleteRule}
       />
     </div>
   );
