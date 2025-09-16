@@ -15,7 +15,6 @@ const getStartOfWeek = (date) => {
   return new Date(newDate.setDate(diff));
 };
 
-// CORREÇÃO: Definimos a URL da API como uma constante no topo
 const API_BASE_URL = 'https://arena-floriano.onrender.com';
 
 const AdminDashboard = () => {
@@ -31,9 +30,7 @@ const AdminDashboard = () => {
     setError('');
     try {
       const dateString = formatDateForAPI(weekStartDate);
-      // CORREÇÃO: Usamos a constante para construir a URL
       const url = `${API_BASE_URL}/api/bookings/admin?startDate=${dateString}`;
-      
       const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
       setBookings(response.data);
     } catch (err) {
@@ -88,12 +85,25 @@ const AdminDashboard = () => {
   };
   
   const handleDeleteBooking = async (bookingId) => {
-    if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
+    if (window.confirm('Tem certeza de que deseja excluir o agendamento deste dia?')) {
       try {
         await axios.delete(`${API_BASE_URL}/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         handleCloseModal();
         fetchAdminBookingsForWeek();
       } catch (err) { alert("Erro ao excluir o agendamento."); }
+    }
+  };
+
+  // NOVA FUNÇÃO ADICIONADA
+  const handleDeleteRule = async (ruleId) => {
+    if (window.confirm('ATENÇÃO! Isso excluirá a REGRA do mensalista e todos os seus futuros agendamentos gerados. Deseja continuar?')) {
+        try {
+            await axios.delete(`${API_BASE_URL}/api/bookings/admin/${ruleId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            handleCloseModal();
+            fetchAdminBookingsForWeek(); // Atualiza a agenda para remover os horários
+        } catch(err) {
+            alert("Erro ao excluir a regra do mensalista.");
+        }
     }
   };
   
@@ -122,6 +132,7 @@ const AdminDashboard = () => {
         onClose={handleCloseModal}
         onSave={handleSaveBooking}
         onDelete={handleDeleteBooking}
+        onDeleteRule={handleDeleteRule} // PROP ADICIONADA
       />
     </div>
   );
