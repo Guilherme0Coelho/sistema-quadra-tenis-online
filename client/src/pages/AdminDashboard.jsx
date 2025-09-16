@@ -15,8 +15,6 @@ const getStartOfWeek = (date) => {
   return new Date(newDate.setDate(diff));
 };
 
-const API_BASE_URL = 'https://arena-floriano.onrender.com';
-
 const AdminDashboard = () => {
   const [bookings, setBookings] = useState([]);
   const [weekStartDate, setWeekStartDate] = useState(getStartOfWeek(new Date()));
@@ -24,25 +22,20 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [modalInfo, setModalInfo] = useState({ isOpen: false, data: null });
   const token = localStorage.getItem('token');
+const API_BASE_URL = 'https://arena-floriano.onrender.com';
 
   const fetchAdminBookingsForWeek = async () => {
-    setIsLoading(true);
-    setError('');
+    setIsLoading(true); setError('');
     try {
       const dateString = formatDateForAPI(weekStartDate);
       const url = `${API_BASE_URL}/api/bookings/admin?startDate=${dateString}`;
       const response = await axios.get(url, { headers: { 'Authorization': `Bearer ${token}` } });
       setBookings(response.data);
-    } catch (err) {
-      setError('Falha ao carregar agendamentos.');
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) { setError('Falha ao carregar agendamentos.'); }
+    finally { setIsLoading(false); }
   };
 
-  useEffect(() => {
-    fetchAdminBookingsForWeek();
-  }, [weekStartDate]);
+  useEffect(() => { fetchAdminBookingsForWeek(); }, [weekStartDate]);
 
   const goToPreviousWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() - 7); return d; });
   const goToNextWeek = () => setWeekStartDate(prev => { const d = new Date(prev); d.setDate(prev.getDate() + 7); return d; });
@@ -60,32 +53,33 @@ const AdminDashboard = () => {
   const handleSaveBooking = async (formData) => {
     try {
       const isEditing = !!formData.id;
-      const apiUrl = `${API_BASE_URL}/api/bookings/admin`;
-      
       if (isEditing) {
-        const updateData = { bookingType: formData.bookingType, paymentStatus: formData.paymentStatus, price: formData.price, note: formData.note, guestName: formData.userName };
-        await axios.put(`${apiUrl}/${formData.id}`, updateData, { headers: { 'Authorization': `Bearer ${token}` } });
+        const updateData = { paymentStatus: formData.paymentStatus, price: formData.price, note: formData.note, guestName: formData.userName };
+        await axios.put(`${API_BASE_URL}/api/bookings/admin/${formData.id}`, updateData, { headers: { 'Authorization': `Bearer ${token}` } });
       } else {
-        const [hour, minute] = formData.time.split(':');
+        const [hour, minute] = formData.time.split(':').map(Number);
         const startTime = new Date(formData.date);
         startTime.setHours(hour, minute, 0, 0); 
-        const endTime = new Date(startTime.getTime() + (formData.duration || 60) * 60000); 
+        const durationInMs = (formData.duration || 60) * 60000;
+        const endTime = new Date(startTime.getTime() + durationInMs); 
         const newBookingData = {
-          userId: null, courtId: 1, startTime: startTime.toISOString(),
-          endTime: endTime.toISOString(), bookingType: formData.bookingType,
+          userId: null, courtId: 1, 
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString(), 
+          bookingType: formData.bookingType,
           paymentStatus: formData.paymentStatus, 
           isRecurring: formData.bookingType === 'mensalista',
           guestName: formData.userName, price: formData.price || 0, note: formData.note
         };
-        await axios.post(apiUrl, newBookingData, { headers: { 'Authorization': `Bearer ${token}` } });
+        await axios.post(`${API_BASE_URL}/api/bookings/admin`, newBookingData, { headers: { 'Authorization': `Bearer ${token}` } });
       }
       handleCloseModal();
       fetchAdminBookingsForWeek();
-    } catch (err) { alert("Erro ao salvar o agendamento."); }
+    } catch (err) { alert("Erro ao salvar o agendamento."); console.error(err); }
   };
   
   const handleDeleteBooking = async (bookingId) => {
-    if (window.confirm('Tem certeza de que deseja excluir o agendamento deste dia?')) {
+    if (window.confirm('Isso excluirá o agendamento deste dia. Deseja continuar?')) {
       try {
         await axios.delete(`${API_BASE_URL}/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         handleCloseModal();
@@ -94,13 +88,12 @@ const AdminDashboard = () => {
     }
   };
 
-  // NOVA FUNÇÃO ADICIONADA
   const handleDeleteRule = async (ruleId) => {
-    if (window.confirm('ATENÇÃO! Isso excluirá a REGRA do mensalista e todos os seus futuros agendamentos gerados. Deseja continuar?')) {
+    if (window.confirm('Atenção! Isso excluirá a REGRA do mensalista e todos os seus futuros agendamentos. Deseja continuar?')) {
         try {
             await axios.delete(`${API_BASE_URL}/api/bookings/admin/${ruleId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             handleCloseModal();
-            fetchAdminBookingsForWeek(); // Atualiza a agenda para remover os horários
+            fetchAdminBookingsForWeek();
         } catch(err) {
             alert("Erro ao excluir a regra do mensalista.");
         }
@@ -117,7 +110,6 @@ const AdminDashboard = () => {
         <h2>Agenda de {weekStartDate.toLocaleDateString('pt-BR')} até {weekEndDate.toLocaleDateString('pt-BR')}</h2>
         <button onClick={goToNextWeek}>Próxima Semana &rarr;</button>
       </div>
-      
       {isLoading ? <p style={{textAlign: 'center'}}>Carregando...</p> : error ? <p className="error-message">{error}</p> : (
         <Calendar 
           bookings={bookings}
@@ -126,13 +118,12 @@ const AdminDashboard = () => {
           onSlotClick={handleSlotClick}
         />
       )}
-      
       <AdminBookingModal 
         modalInfo={modalInfo}
         onClose={handleCloseModal}
         onSave={handleSaveBooking}
         onDelete={handleDeleteBooking}
-        onDeleteRule={handleDeleteRule} // PROP ADICIONADA
+        onDeleteRule={handleDeleteRule}
       />
     </div>
   );

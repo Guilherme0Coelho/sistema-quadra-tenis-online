@@ -45,7 +45,6 @@ const AdminBookingModal = ({ modalInfo, onClose, onSave, onDelete, onDeleteRule 
   };
   
   const handleDeleteRule = () => {
-    // A regra a ser deletada é o pai (se existir) ou o próprio registro (se for a regra)
     const ruleId = bookingData.parent_booking_id || bookingData.id;
     if (ruleId) {
       onDeleteRule(ruleId);
@@ -70,11 +69,12 @@ const AdminBookingModal = ({ modalInfo, onClose, onSave, onDelete, onDeleteRule 
           </div>
           <div className="form-group">
             <label>Duração</label>
+            {/* CORREÇÃO CRÍTICA AQUI: Os valores (value) agora são os minutos corretos */}
             <select name="duration" value={bookingData.duration || 60} onChange={handleChange} disabled={isEditing}>
-              <option value={50}>30 Min</option>
-              <option value={100}>1 Hora</option>
-              <option value={150}>1h 30</option>
-              <option value={200}>2 Horas</option>
+              <option value={30}>30 Min</option>
+              <option value={60}>1 Hora</option>
+              <option value={90}>1h 30</option>
+              <option value={120}>2 Horas</option>
             </select>
           </div>
           <div className="form-group">
@@ -83,7 +83,7 @@ const AdminBookingModal = ({ modalInfo, onClose, onSave, onDelete, onDeleteRule 
           </div>
           <div className="form-group">
             <label>Tipo</label>
-            <select name="bookingType" value={bookingData.bookingType} onChange={handleChange} required disabled={isEditing}>
+            <select name="bookingType" value={bookingData.bookingType} onChange={handleChange} required disabled={isEditing && isMensalistaInstance}>
               <option value="avulso">Avulso</option>
               <option value="mensalista">Mensalista (Criar Regra)</option>
               <option value="reposicao">Reposição</option>

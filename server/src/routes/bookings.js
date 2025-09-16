@@ -18,25 +18,16 @@ const generateRecurringBookings = async (rule, weeksToGenerate = 12) => {
         if (targetDate.getUTCDay() === originalStartTime.getUTCDay()) {
             const newStartTime = new Date(targetDate);
             newStartTime.setUTCHours(originalStartTime.getUTCHours(), originalStartTime.getUTCMinutes(), 0, 0);
-
             if (newStartTime < new Date()) continue;
-
             const duration = new Date(rule.end_time) - originalStartTime;
             const newEndTime = new Date(newStartTime.getTime() + duration);
-
             const existingQuery = await pool.query(`SELECT id FROM bookings WHERE start_time = $1 AND is_recurring = false`, [newStartTime]);
             if (existingQuery.rows.length === 0) {
                 await createBooking({
-                    userId: rule.user_id,
-                    courtId: rule.court_id,
-                    startTime: newStartTime.toISOString(),
-                    endTime: newEndTime.toISOString(),
-                    bookingType: 'mensalista',
-                    paymentStatus: 'pending',
-                    isRecurring: false,
-                    guestName: rule.guest_name,
-                    price: rule.price,
-                    note: 'Gerado automaticamente',
+                    userId: rule.user_id, courtId: rule.court_id, startTime: newStartTime.toISOString(),
+                    endTime: newEndTime.toISOString(), bookingType: 'mensalista',
+                    paymentStatus: 'pending', isRecurring: false,
+                    guestName: rule.guest_name, price: rule.price, note: 'Gerado automaticamente',
                     parentBookingId: rule.id
                 });
                 newBookingsCount++;
@@ -46,7 +37,7 @@ const generateRecurringBookings = async (rule, weeksToGenerate = 12) => {
     return newBookingsCount;
 };
 
-// Rota pública do cliente - SIMPLIFICADA
+// Rota pública do cliente
 router.get('/public', async (req, res) => {
     try {
         const { date } = req.query;
@@ -59,7 +50,7 @@ router.get('/public', async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota do admin - SIMPLIFICADA
+// Rota da agenda do admin
 router.get('/admin', authMiddleware, async (req, res) => {
     const { startDate: startDateString } = req.query;
     if (!startDateString) return res.status(400).json({ error: 'A data de início da semana é obrigatória.' });
@@ -73,7 +64,7 @@ router.get('/admin', authMiddleware, async (req, res) => {
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// ROTA PARA GERAR OS AGENDAMENTOS DOS MENSALISTAS
+// Rota para gerar agendamentos recorrentes
 router.post('/admin/generate-recurring', authMiddleware, async (req, res) => {
     try {
         const { weeksToGenerate } = req.body;
@@ -85,12 +76,11 @@ router.post('/admin/generate-recurring', authMiddleware, async (req, res) => {
         }
         res.status(200).json({ message: `${totalNewBookings} novos agendamentos de mensalistas foram gerados.` });
     } catch (error) {
-        console.error("Erro ao gerar agendamentos recorrentes:", error);
         res.status(500).json({ error: 'Erro ao gerar agendamentos.' });
     }
 });
 
-// Rota para listar apenas as REGRAS de mensalistas
+// Rota para listar as REGRAS de mensalistas
 router.get('/admin/recurring-rules', authMiddleware, async (req, res) => {
     try {
         const query = `SELECT b.*, u.name as user_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.is_recurring = true AND b.booking_type = 'mensalista' ORDER BY b.start_time`;
@@ -109,13 +99,10 @@ router.post('/admin', authMiddleware, async (req, res) => {
         await generateRecurringBookings(newBooking);
     }
     res.status(201).json(newBooking);
-  } catch (error) {
-    console.error("ERRO DETALHADO AO CRIAR AGENDAMENTO:", error);
-    res.status(500).json({ error: 'Erro ao criar agendamento.' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Erro ao criar agendamento.' }); }
 });
 
-// Rota PUT para o admin (edita um agendamento REAL)
+// Rota para ATUALIZAR um agendamento
 router.put('/admin/:id', authMiddleware, async (req, res) => {
   try {
     const updatedBooking = await updateBooking(req.params.id, req.body);
@@ -124,26 +111,31 @@ router.put('/admin/:id', authMiddleware, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota DELETE para o admin (deleta um agendamento REAL ou uma REGRA)
+// Rota para EXCLUIR um agendamento (real ou regra)
 router.delete('/admin/:id', authMiddleware, async (req, res) => {
   try {
     const deletedBooking = await deleteBooking(req.params.id);
     if (!deletedBooking) return res.status(404).json({ error: 'Agendamento não encontrado.' });
     res.status(200).json({ message: 'Agendamento excluído com sucesso.' });
-  } catch (error) {
-    console.error("ERRO DETALHADO AO EXCLUIR AGENDAMENTO:", error);
-    res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
+  } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota Financeira (lê apenas agendamentos reais)
+// Rota Financeira (COM A CORREÇÃO DE CACHE)
 router.get('/finance', authMiddleware, async (req, res) => {
+  if (req.user.admin_level !== 'super') {
+    return res.status(403).json({ error: 'Acesso proibido. Apenas para Super Admins.' });
+  }
+
   const { year, month } = req.query;
   if (!year || !month) return res.status(400).json({ error: 'Ano e mês são obrigatórios.' });
   try {
     const startDate = new Date(Date.UTC(year, month, 1));
     const endDate = new Date(Date.UTC(year, parseInt(month) + 1, 1));
     const { rows } = await pool.query(`SELECT b.*, u.name as user_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.is_recurring = false AND b.start_time >= $1 AND b.start_time < $2 ORDER BY b.start_time DESC`, [startDate, endDate]);
+    
+    // CORREÇÃO: Adiciona o cabeçalho para não guardar em cache
+    res.setHeader('Cache-Control', 'no-cache');
+    
     res.json(rows);
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
@@ -156,6 +148,7 @@ router.post('/create-checkout-session', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
+      customer_email_collection: 'required',
       line_items: [{ price_data: { currency: 'brl', product_data: { name: `Reserva de Quadra - ${duration} min`, description: `Agendamento para ${new Date(bookingDetails.slot.date).toLocaleDateString('pt-BR')} às ${bookingDetails.slot.time}` }, unit_amount: amountInCents }, quantity: 1 }],
       mode: 'payment',
       success_url: `http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -186,5 +179,25 @@ router.post('/verify-session-and-save', async (req, res) => {
     } else { res.status(400).json({ success: false, message: 'Pagamento não confirmado.' }); }
   } catch (error) { res.status(500).json({ success: false, error: 'Falha ao verificar a sessão.' }); }
 });
+// NOVA ROTA PARA ATUALIZAÇÃO EM MASSA (PAGAR O MÊS)
+router.post('/admin/bulk-status-update', authMiddleware, async (req, res) => {
+    const { parent_booking_id, year, month, payment_status, price } = req.body;
+    if (!parent_booking_id || !year || !month || !payment_status) {
+        return res.status(400).json({ error: 'Dados insuficientes para atualização.' });
+    }
+    try {
+        const startDate = new Date(Date.UTC(year, month, 1));
+        const endDate = new Date(Date.UTC(year, parseInt(month) + 1, 1));
 
+        await pool.query(
+            `UPDATE bookings SET payment_status = $1, price = $2 
+             WHERE parent_booking_id = $3 AND start_time >= $4 AND start_time < $5`,
+            [payment_status, price, parent_booking_id, startDate, endDate]
+        );
+        res.status(200).json({ message: 'Status do mês atualizado com sucesso.' });
+    } catch (error) {
+        console.error("Erro na atualização em massa:", error);
+        res.status(500).json({ error: 'Erro ao atualizar status.' });
+    }
+});
 module.exports = router;

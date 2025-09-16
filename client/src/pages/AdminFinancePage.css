@@ -1,23 +1,166 @@
 /* src/pages/AdminFinancePage.css */
-.finance-page h2 { text-align: center; margin-bottom: 2rem; color: #2d3748; }
-.finance-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-.finance-controls h3 { margin: 0; min-width: 200px; text-align: center; text-transform: capitalize; }
-.finance-controls button { background-color: #4A5568; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
-.finance-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-.summary-card { padding: 1.5rem; border-radius: 8px; text-align: center; color: white; }
-.summary-card.received { background-color: #38A169; }
-.summary-card.pending { background-color: #D69E2E; }
-.summary-card h4 { margin: 0 0 0.5rem 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9; }
-.summary-card p { margin: 0; font-size: 1.8rem; font-weight: bold; }
-.table-wrapper { width: 100%; overflow-x: auto; }
-.finance-table { width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
-.finance-table th, .finance-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: middle; }
-.finance-table th { background-color: #f7fafc; }
-.finance-table tbody tr:hover { background-color: #f7fafc; }
-.finance-table tbody tr:last-child td { border-bottom: none; }
-.status-pill { padding: 4px 10px; border-radius: 999px; font-size: 0.8rem; font-weight: bold; text-transform: capitalize; }
-.status-pill.paid { background-color: #C6F6D5; color: #22543D; }
-.status-pill.pending { background-color: #FEFCBF; color: #975A16; }
-.status-pill.not_required { background-color: #E2E8F0; color: #4A5568; }
-.status-pill.ausencia { background-color: #e2e8f0; color: #718096; }
-.btn-paid { background-color: #3182CE; color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8rem; }
+.finance-page h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #2d3748;
+}
+.finance-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+.finance-controls h3 {
+  margin: 0;
+  min-width: 200px;
+  text-align: center;
+  text-transform: capitalize;
+}
+.finance-controls button {
+  background-color: #4A5568;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.finance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.summary-card {
+  padding: 1.5rem;
+  border-radius: 8px;
+  text-align: center;
+  color: white;
+}
+.summary-card.received {
+  background-color: #38A169;
+}
+.summary-card.pending {
+  background-color: #D69E2E;
+}
+.summary-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+.summary-card p {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+.finance-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.finance-table th, .finance-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+.finance-table th {
+  background-color: #f7fafc;
+}
+.finance-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.finance-table .date-text {
+  font-size: 0.8rem;
+  color: #718096;
+}
+
+/* Estilos para Agrupamento */
+.group-row {
+  background-color: #edf2f7;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.group-row:hover {
+  background-color: #e2e8f0;
+}
+.child-row {
+  background-color: #f7fafc;
+}
+.child-data {
+  padding-left: 30px !important;
+}
+.action-text {
+    color: #3182ce;
+    font-size: 0.8rem;
+    font-weight: normal;
+}
+/* Fim dos Estilos para Agrupamento */
+
+.status-pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+.status-pill.paid {
+  background-color: #C6F6D5;
+  color: #22543D;
+}
+.status-pill.pending {
+  background-color: #FEFCBF;
+  color: #975A16;
+}
+.status-pill.not_required {
+  background-color: #E2E8F0;
+  color: #4A5568;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+.btn-paid-finance, .btn-delete-finance {
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.btn-paid-finance {
+    background-color: #3182CE;
+}
+.btn-delete-finance {
+  background-color: #e53e3e;
+}
+/* src/pages/AdminFinancePage.css */
+/* ... (todos os estilos anteriores) ... */
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.btn-paid-finance, .btn-delete-finance {
+  color: white; border: none;
+  padding: 6px 10px; border-radius: 5px;
+  cursor: pointer; font-size: 0.8rem;
+}
+.btn-paid-finance { background-color: #3182CE; }
+.btn-delete-finance { background-color: #e53e3e; }
+.action-text {
+    color: #3182ce;
+    font-size: 0.8rem;
+    font-weight: normal;
+    cursor: pointer;
+}
