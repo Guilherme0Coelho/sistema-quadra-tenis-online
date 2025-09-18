@@ -22,7 +22,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [modalInfo, setModalInfo] = useState({ isOpen: false, data: null });
   const token = localStorage.getItem('token');
-const API_BASE_URL = 'https://arena-floriano.onrender.com';
+const API_BASE_URL = 'https://arena-floriano.onrender.com'; //'http://localhost:3001'; ou //'https://arena-floriano.onrender.com';
 
   const fetchAdminBookingsForWeek = async () => {
     setIsLoading(true); setError('');
@@ -81,10 +81,11 @@ const API_BASE_URL = 'https://arena-floriano.onrender.com';
   const handleDeleteBooking = async (bookingId) => {
     if (window.confirm('Isso excluirá o agendamento deste dia. Deseja continuar?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/bookings/admin/${bookingId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const updateData = { bookingType: 'ausencia', note: 'Ausência registrada' };
+        await axios.put(`${API_BASE_URL}/api/bookings/admin/${bookingId}`, updateData, { headers: { 'Authorization': `Bearer ${token}` } });
         handleCloseModal();
         fetchAdminBookingsForWeek();
-      } catch (err) { alert("Erro ao excluir o agendamento."); }
+      } catch (err) { alert("Erro ao registrar ausência."); }
     }
   };
 

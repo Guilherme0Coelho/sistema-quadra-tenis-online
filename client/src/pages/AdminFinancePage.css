@@ -164,3 +164,9 @@
     font-weight: normal;
     cursor: pointer;
 }
+/* Adicione no final do AdminFinancePage.css */
+.child-row.row-ausencia {
+  background-color: #f7fafc;
+  color: #a0aec0;
+  text-decoration: line-through; /* Tacha o texto da linha inteira */
+}

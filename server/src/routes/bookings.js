@@ -45,7 +45,12 @@ router.get('/public', async (req, res) => {
         const selectedDate = new Date(`${date}T00:00:00.000Z`);
         const nextDay = new Date(selectedDate);
         nextDay.setUTCDate(selectedDate.getUTCDate() + 1);
-        const result = await pool.query(`SELECT id, start_time, end_time, booking_type FROM bookings WHERE is_recurring = false AND start_time >= $1 AND start_time < $2 ORDER BY start_time`, [selectedDate, nextDay]);
+        const result = await pool.query(
+            `SELECT id, start_time, end_time, booking_type FROM bookings 
+             WHERE is_recurring = false AND booking_type != 'ausencia' 
+             AND start_time >= $1 AND start_time < $2 ORDER BY start_time`, 
+            [selectedDate, nextDay]
+        );
         res.json(result.rows);
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
@@ -58,8 +63,9 @@ router.get('/admin', authMiddleware, async (req, res) => {
         const weekStart = new Date(`${startDateString}T00:00:00.000Z`);
         const weekEnd = new Date(weekStart);
         weekEnd.setUTCDate(weekStart.getUTCDate() + 7);
-        const query = `SELECT b.*, u.name as user_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.start_time >= $1 AND b.start_time < $2 AND b.is_recurring = false ORDER BY b.start_time`;
+        const query = `SELECT b.*, u.name as user_name FROM bookings b LEFT JOIN users u ON b.user_id = u.id WHERE b.start_time >= $1 AND b.start_time < $2 AND b.is_recurring = false AND b.booking_type != 'ausencia' ORDER BY b.start_time`;
         const { rows } = await pool.query(query, [weekStart, weekEnd]);
+        
         res.json(rows);
     } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
