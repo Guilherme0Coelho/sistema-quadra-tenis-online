@@ -146,23 +146,23 @@ router.get('/finance', authMiddleware, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// ROTA DE PAGAMENTO (VERSÃO DE TESTE "BRUTO")
+// Rotas de Pagamento
 router.post('/create-checkout-session', async (req, res) => {
+  const { duration, bookingDetails } = req.body;
+  const pricePer30Min = 5000;
+  const amountInCents = (duration / 30) * pricePer30Min;
   try {
-    // A única coisa que faremos é registrar que a rota foi chamada.
-    console.log('\n\n🔥🔥🔥 ROTA CREATE-CHECKOUT-SESSION FOI EXECUTADA COM SUCESSO! 🔥🔥🔥\n\n');
-    
-    // Vamos retornar um erro controlado para o frontend, para não continuar o fluxo.
-    res.status(503).json({ 
-        error: 'Teste de rota bem-sucedido. O problema ocorre depois deste ponto, na comunicação com o Stripe.' 
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email_collection: 'required',
+      line_items: [{ price_data: { currency: 'brl', product_data: { name: `Reserva de Quadra - ${duration} min`, description: `Agendamento para ${new Date(bookingDetails.slot.date).toLocaleDateString('pt-BR')} às ${bookingDetails.slot.time}` }, unit_amount: amountInCents }, quantity: 1 }],
+      mode: 'payment',
+      success_url: `http://localhost:5173/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `http://localhost:5173/cancel`,
     });
-
-  } catch (error) { 
-      console.error("❌❌❌ UM ERRO INESPERADO OCORREU NESTA ROTA ❌❌❌", error);
-      res.status(500).json({ error: 'Falha catastrófica.' }); 
-  }
+    res.json({ url: session.url });
+  } catch (error) { res.status(500).json({ error: 'Falha ao criar sessão de pagamento.' }); }
 });
-
 router.post('/verify-session-and-save', async (req, res) => {
   try {
     const { session_id, bookingDetails } = req.body;
