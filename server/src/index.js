@@ -8,7 +8,8 @@ const bookingRoutes = require('./routes/bookings');
 const authRoutes = require('./routes/auth');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
+
 
 // --- CONFIGURAÇÃO DE CORS ESPECÍFICA E SEGURA ---
 const corsOptions = {
