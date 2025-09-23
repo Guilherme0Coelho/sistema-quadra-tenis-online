@@ -16,7 +16,7 @@ const AdminLoginPage = () => {
     setError('');
     setIsLoading(true);
     try {
-      const response = await axios.post('https://arena-floriano.onrender.com/api/auth/login', { email, password });
+      const response = await axios.post('https://sistema-arena-floriano.onrender.com/api/auth/login', { email, password });
       const { token } = response.data;
       localStorage.setItem('token', token);
       navigate('/admin/dashboard');

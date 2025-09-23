@@ -8,7 +8,7 @@ import './App.css';
 import logo from './assets/arenalogo.png';
 
 const formatDateForAPI = (date) => new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-const API_BASE_URL = 'https://arena-floriano.onrender.com';
+const API_BASE_URL = 'https://sistema-arena-floriano.onrender.com';
 
 function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(null);

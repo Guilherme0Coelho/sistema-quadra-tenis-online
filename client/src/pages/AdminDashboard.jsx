@@ -22,7 +22,7 @@ const AdminDashboard = () => {
   const [error, setError] = useState('');
   const [modalInfo, setModalInfo] = useState({ isOpen: false, data: null });
   const token = localStorage.getItem('token');
-const API_BASE_URL = 'https://arena-floriano.onrender.com'; //'http://localhost:3001'; ou //'https://arena-floriano.onrender.com';
+const API_BASE_URL = 'https://sistema-arena-floriano.onrender.com'; //'http://localhost:3001'; ou //'https://sistema-arena-floriano.onrender.com';
 
   const fetchAdminBookingsForWeek = async () => {
     setIsLoading(true); setError('');

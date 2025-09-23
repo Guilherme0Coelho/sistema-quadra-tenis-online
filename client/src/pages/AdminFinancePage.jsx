@@ -14,7 +14,7 @@ const AdminFinancePage = () => {
   const [expandedRows, setExpandedRows] = useState({});
   const [modalInfo, setModalInfo] = useState({ isOpen: false, data: null });
   const token = localStorage.getItem('token');
-  const API_BASE_URL = 'https://arena-floriano.onrender.com'; //'https://arena-floriano.onrender.com'; ou 'http://localhost:3001'; Mude para a URL do Render quando for publicar
+  const API_BASE_URL = 'https://sistema-arena-floriano.onrender.com'; //'https://sistema-arena-floriano.onrender.com'; ou 'http://localhost:3001'; Mude para a URL do Render quando for publicar
 
   const fetchFinanceData = useCallback(async () => {
     const year = currentDate.getFullYear();
