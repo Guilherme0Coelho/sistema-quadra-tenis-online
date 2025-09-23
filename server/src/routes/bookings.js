@@ -146,41 +146,36 @@ router.get('/finance', authMiddleware, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// Rota de Pagamento (VERSÃO FINAL E SEGURA)
 router.post('/create-checkout-session', async (req, res) => {
   try {
     const { duration, bookingDetails } = req.body;
 
-    // Verificação de segurança para garantir que os dados chegaram corretamente
     if (!duration || !bookingDetails || !bookingDetails.slot || !bookingDetails.slot.date || !bookingDetails.slot.time) {
-      console.error("ERRO: Dados incompletos recebidos para criar checkout:", req.body);
       return res.status(400).json({ error: 'Dados do agendamento estão incompletos.' });
     }
     
     const pricePer30Min = 5000;
     const amountInCents = (duration / 30) * pricePer30Min;
     
-    // Descrição segura, sem usar 'toLocaleDateString' que pode causar erros no servidor
     const dateObj = new Date(bookingDetails.slot.date);
     const dateStr = `${String(dateObj.getUTCDate()).padStart(2, '0')}/${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}/${dateObj.getUTCFullYear()}`;
     const description = `Data: ${dateStr} às ${bookingDetails.slot.time}`;
 
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'], // PIX está desativado por enquanto
-      customer_email_collection: 'required', // Pede o e-mail do cliente
+      payment_method_types: ['card'],
+      // A LINHA COM ERRO FOI REMOVIDA. O Stripe pedirá o e-mail por padrão.
       line_items: [{
         price_data: {
           currency: 'brl',
           product_data: {
             name: `Reserva de Quadra - ${duration} min`,
-            description: description, // Descrição segura
+            description: description,
           },
           unit_amount: amountInCents,
         },
         quantity: 1,
       }],
       mode: 'payment',
-      // URLs finais, apontando para o seu site online
       success_url: `https://sistema-quadra-tenis-online.vercel.app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://sistema-quadra-tenis-online.vercel.app/`,
     });
