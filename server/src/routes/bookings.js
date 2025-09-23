@@ -146,53 +146,77 @@ router.get('/finance', authMiddleware, async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Erro interno do servidor.' }); }
 });
 
-// ROTA DE PAGAMENTO (VERSÃO DE DIAGNÓSTICO FINAL)
+// Rota de Pagamento (VERSÃO FINAL E SEGURA)
 router.post('/create-checkout-session', async (req, res) => {
-  console.log('\n--- ROTA DE CHECKOUT ACIONADA ---');
   try {
     const { duration, bookingDetails } = req.body;
+
+    // Verificação de segurança para garantir que os dados chegaram corretamente
+    if (!duration || !bookingDetails || !bookingDetails.slot || !bookingDetails.slot.date || !bookingDetails.slot.time) {
+      console.error("ERRO: Dados incompletos recebidos para criar checkout:", req.body);
+      return res.status(400).json({ error: 'Dados do agendamento estão incompletos.' });
+    }
     
-    if (!duration || !bookingDetails) {
-      console.error('ERRO: Duração ou bookingDetails faltando no corpo da requisição.');
-      return res.status(400).json({ error: 'Dados faltando.' });
-    }
-    console.log('Dados recebidos com sucesso:', { duration, bookingDetails });
-
-    if (!stripe) {
-      console.error('ERRO FATAL: A variável Stripe não foi inicializada. Verifique a STRIPE_SECRET_KEY nas variáveis de ambiente do Render.');
-      return res.status(500).json({ error: 'Configuração do servidor incompleta.' });
-    }
-    console.log('Variável Stripe foi inicializada com sucesso.');
-
     const pricePer30Min = 5000;
     const amountInCents = (duration / 30) * pricePer30Min;
-    console.log('Preço calculado. Valor em centavos:', amountInCents);
+    
+    // Descrição segura, sem usar 'toLocaleDateString' que pode causar erros no servidor
+    const dateObj = new Date(bookingDetails.slot.date);
+    const dateStr = `${String(dateObj.getUTCDate()).padStart(2, '0')}/${String(dateObj.getUTCMonth() + 1).padStart(2, '0')}/${dateObj.getUTCFullYear()}`;
+    const description = `Data: ${dateStr} às ${bookingDetails.slot.time}`;
 
-    // Para simplificar o teste, removemos a data da descrição temporariamente
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: ['card'], // PIX está desativado por enquanto
+      customer_email_collection: 'required', // Pede o e-mail do cliente
       line_items: [{
         price_data: {
           currency: 'brl',
           product_data: {
             name: `Reserva de Quadra - ${duration} min`,
+            description: description, // Descrição segura
           },
           unit_amount: amountInCents,
         },
         quantity: 1,
       }],
       mode: 'payment',
+      // URLs finais, apontando para o seu site online
       success_url: `https://sistema-quadra-tenis-online.vercel.app/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `https://sistema-quadra-tenis-online.vercel.app/`,
     });
     
-    console.log('Sessão do Stripe criada com sucesso. URL:', session.url);
     res.json({ url: session.url });
 
   } catch (error) { 
-    console.error("!!!!!!!!!!!! ERRO CATASTRÓFICO CAPTURADO !!!!!!!!!!!!");
-    console.error(error);
-    res.status(500).json({ message: 'Falha crítica ao processar pagamento.', details: error.message }); 
+      console.error("ERRO AO CRIAR SESSÃO NO STRIPE:", error);
+      res.status(500).json({ error: 'Falha ao criar sessão de pagamento.' }); 
+  }
+});
+router.post('/verify-session-and-save', async (req, res) => {
+  try {
+    const { session_id, bookingDetails } = req.body;
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    if (session.payment_status === 'paid') {
+      const paymentIntentId = session.payment_intent;
+      const existingBookingQuery = await pool.query(`SELECT id FROM bookings WHERE payment_intent_id = $1`, [paymentIntentId]);
+      if (existingBookingQuery.rows.length > 0) {
+        return res.status(200).json({ success: true, message: 'Agendamento já registrado.' });
+      }
+      const [hour, minute] = bookingDetails.slot.time.split(':');
+      const startTime = new Date(bookingDetails.slot.date);
+      startTime.setHours(hour, minute, 0, 0);
+      const endTime = new Date(startTime.getTime() + bookingDetails.duration * 60000);
+      await createBooking({
+        userId: null, courtId: 1, startTime: startTime.toISOString(), endTime: endTime.toISOString(), bookingType: 'avulso',
+        paymentStatus: 'paid', isRecurring: false, paymentIntentId: paymentIntentId,
+        price: session.amount_total / 100,
+      });
+      res.status(201).json({ success: true });
+    } else {
+      res.status(400).json({ success: false, message: 'Pagamento não confirmado.' });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Falha ao verificar a sessão.' });
   }
 });
 // NOVA ROTA PARA ATUALIZAÇÃO EM MASSA (PAGAR O MÊS)
